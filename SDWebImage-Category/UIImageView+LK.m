@@ -7,7 +7,7 @@
 //
 
 #import "UIImageView+LK.h"
-#import "THProgressView.h"
+#import "LK_THProgressView.h"
 #import <execinfo.h>
 #import <objc/runtime.h>
 #import <objc/message.h>
@@ -27,16 +27,16 @@ static char imageReloadCountKey;
     [self cancelCurrentImageLoad];
 #endif
 }
-- (THProgressView *)sy_progressView:(BOOL)isCreate
+- (LK_THProgressView *)sy_progressView:(BOOL)isCreate
 {
     static char imageProgressKey;
-    THProgressView *progressView = objc_getAssociatedObject(self, &imageProgressKey);
+    LK_THProgressView *progressView = objc_getAssociatedObject(self, &imageProgressKey);
     if (isCreate)
     {
         int pwidth = ceil(self.bounds.size.width * 0.76);
         if (progressView == nil)
         {
-            progressView = [[THProgressView alloc] initWithFrame:CGRectMake(0, 0,pwidth, 20)];
+            progressView = [[LK_THProgressView alloc] initWithFrame:CGRectMake(0, 0,pwidth, 20)];
             progressView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleBottomMargin;
             
             progressView.progressTintColor = [UIColor whiteColor];
@@ -117,7 +117,7 @@ static char imageReloadCountKey;
     }
     else
     {
-        THProgressView *pv = [self sy_progressView:NO];
+        LK_THProgressView *pv = [self sy_progressView:NO];
         pv.hidden = YES;
         [pv removeFromSuperview];
         
@@ -172,7 +172,7 @@ static char imageReloadCountKey;
     
     self.status = LKImageViewStatusLoading;
     
-    __block THProgressView *pv = [self sy_progressView:YES];
+    __block LK_THProgressView *pv = [self sy_progressView:YES];
     pv.progress = 0;
     pv.hidden = NO;
     [pv setNeedsDisplay];
@@ -185,6 +185,10 @@ static char imageReloadCountKey;
 #endif
                   progress:^(NSInteger receivedSize, NSInteger expectedSize)
     {
+        if(expectedSize <= 0)
+        {
+            return;
+        }
         float pvalue = MAX(0, MIN(1, receivedSize / (float) expectedSize));
         dispatch_main_sync_safe(^{
             if(wself.image == nil)

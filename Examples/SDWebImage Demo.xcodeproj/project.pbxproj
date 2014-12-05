@@ -36,7 +36,7 @@
 		53A2B50D155B155A00B12423 /* placeholder.png in Resources */ = {isa = PBXBuildFile; fileRef = 53A2B50B155B155A00B12423 /* placeholder.png */; };
 		53A2B50E155B155A00B12423 /* placeholder@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 53A2B50C155B155A00B12423 /* placeholder@2x.png */; };
 		53EEC18916484553007601E1 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 53EEC18816484553007601E1 /* Default-568h@2x.png */; };
-		C5C3238118EA71500048D042 /* THProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = C5C3237118EA71500048D042 /* THProgressView.m */; };
+		C5C3238118EA71500048D042 /* LK_THProgressView.m in Sources */ = {isa = PBXBuildFile; fileRef = C5C3237118EA71500048D042 /* LK_THProgressView.m */; };
 		C5C3238218EA71500048D042 /* UIImageView+LK.m in Sources */ = {isa = PBXBuildFile; fileRef = C5C3237318EA71500048D042 /* UIImageView+LK.m */; };
 		C5C3238418EA719D0048D042 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C5C3238318EA719D0048D042 /* QuartzCore.framework */; };
 		C5C3238718EA8F830048D042 /* remind_noimage.png in Resources */ = {isa = PBXBuildFile; fileRef = C5C3238518EA8F830048D042 /* remind_noimage.png */; };
@@ -96,8 +96,8 @@
 		53A2B50B155B155A00B12423 /* placeholder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = placeholder.png; sourceTree = "<group>"; };
 		53A2B50C155B155A00B12423 /* placeholder@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "placeholder@2x.png"; sourceTree = "<group>"; };
 		53EEC18816484553007601E1 /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Default-568h@2x.png"; path = "../Default-568h@2x.png"; sourceTree = "<group>"; };
-		C5C3237018EA71500048D042 /* THProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = THProgressView.h; sourceTree = "<group>"; };
-		C5C3237118EA71500048D042 /* THProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = THProgressView.m; sourceTree = "<group>"; };
+		C5C3237018EA71500048D042 /* LK_THProgressView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LK_THProgressView.h; sourceTree = "<group>"; };
+		C5C3237118EA71500048D042 /* LK_THProgressView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LK_THProgressView.m; sourceTree = "<group>"; };
 		C5C3237218EA71500048D042 /* UIImageView+LK.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImageView+LK.h"; sourceTree = "<group>"; };
 		C5C3237318EA71500048D042 /* UIImageView+LK.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImageView+LK.m"; sourceTree = "<group>"; };
 		C5C3238318EA719D0048D042 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -238,8 +238,8 @@
 		C5C3236F18EA71500048D042 /* THProgressView */ = {
 			isa = PBXGroup;
 			children = (
-				C5C3237018EA71500048D042 /* THProgressView.h */,
-				C5C3237118EA71500048D042 /* THProgressView.m */,
+				C5C3237018EA71500048D042 /* LK_THProgressView.h */,
+				C5C3237118EA71500048D042 /* LK_THProgressView.m */,
 			);
 			path = THProgressView;
 			sourceTree = "<group>";
@@ -318,7 +318,7 @@
 				36C295341A3193DF00560661 /* SDImageCache.m in Sources */,
 				36C295381A3193DF00560661 /* SDWebImageDownloaderOperation.m in Sources */,
 				36C295411A3193DF00560661 /* UIView+WebCacheOperation.m in Sources */,
-				C5C3238118EA71500048D042 /* THProgressView.m in Sources */,
+				C5C3238118EA71500048D042 /* LK_THProgressView.m in Sources */,
 				36C2953B1A3193DF00560661 /* UIButton+WebCache.m in Sources */,
 				36C295331A3193DF00560661 /* NSData+ImageContentType.m in Sources */,
 				36C2953A1A3193DF00560661 /* SDWebImagePrefetcher.m in Sources */,

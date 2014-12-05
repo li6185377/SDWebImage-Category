@@ -7,7 +7,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface THProgressView : UIView
+@interface LK_THProgressView : UIView
 
 @property (nonatomic, strong) UIColor* progressTintColor;
 @property (nonatomic, strong) UIColor* borderTintColor;

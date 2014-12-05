@@ -5,7 +5,7 @@
 //  Copyright (c) 2013 Tiago Henriques. All rights reserved.
 //
 
-#import "THProgressView.h"
+#import "LK_THProgressView.h"
 
 #import <QuartzCore/QuartzCore.h>
 
@@ -62,6 +62,13 @@ static const CGFloat kBorderWidth = 2.0f;
     CGContextAddLineToPoint(context, rect.origin.x + radius, rect.origin.y);
     CGContextAddArc(context, rect.origin.x + radius, rect.origin.y + radius, radius, -M_PI / 2, M_PI, 1);
 }
+-(void)setNeedsDisplay
+{
+    if([NSThread isMainThread])
+    {
+        [super setNeedsDisplay];
+    }
+}
 
 @end
 
@@ -69,10 +76,10 @@ static const CGFloat kBorderWidth = 2.0f;
 #pragma mark -
 #pragma mark THProgressView
 
-@interface THProgressView()
+@interface LK_THProgressView()
 @property(strong,nonatomic)THProgressLayer* progressLayer;
 @end
-@implementation THProgressView
+@implementation LK_THProgressView
 
 - (id)initWithFrame:(CGRect)frame
 {
@@ -155,6 +162,13 @@ static const CGFloat kBorderWidth = 2.0f;
 {
     self.progressLayer.borderTintColor = borderTintColor;
     [self.progressLayer setNeedsDisplay];
+}
+-(void)setNeedsDisplay
+{
+    if([NSThread isMainThread])
+    {
+        [super setNeedsDisplay];
+    }
 }
 
 @end
