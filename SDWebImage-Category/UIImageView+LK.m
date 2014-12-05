@@ -12,59 +12,33 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 
-@implementation NSObject (Swizzle)
-
-+ (BOOL)jr_swizzleMethod:(SEL)origSel_ withMethod:(SEL)altSel_ error:(NSError**)error_ {
-    
-	Method origMethod = class_getInstanceMethod(self, origSel_);
-	if (!origMethod) {
-		return NO;
-	}
-	Method altMethod = class_getInstanceMethod(self, altSel_);
-	if (!altMethod) {
-		return NO;
-	}
-	
-	class_addMethod(self,
-					origSel_,
-					class_getMethodImplementation(self, origSel_),
-					method_getTypeEncoding(origMethod));
-	class_addMethod(self,
-					altSel_,
-					class_getMethodImplementation(self, altSel_),
-					method_getTypeEncoding(altMethod));
-	
-	method_exchangeImplementations(class_getInstanceMethod(self, origSel_), class_getInstanceMethod(self, altSel_));
-	return YES;
-}
-
-+ (BOOL)jr_swizzleClassMethod:(SEL)origSel_ withClassMethod:(SEL)altSel_ error:(NSError**)error_ {
-	return [object_getClass((id)self) jr_swizzleMethod:origSel_ withMethod:altSel_ error:error_];
-}
-
-@end
-
-
 static char imageURLKey;
 static char imageStatusKey;
 static char imageTapEventKey;
-static char imageOriginalModelKey;
+static char imageLoadedModeKey;
+static char imageReloadCountKey;
 
 @implementation UIImageView (SY)
-+ (void)load
+-(void)lk_cancelCurrentImageLoad
 {
-    [UIImageView jr_swizzleMethod:@selector(cancelCurrentImageLoad) withMethod:@selector(sy_cancelCurrentImageLoad) error:nil];
+#ifdef dispatch_main_async_safe
+    [self sd_cancelCurrentImageLoad];
+#else
+    [self cancelCurrentImageLoad];
+#endif
 }
-
 - (THProgressView *)sy_progressView:(BOOL)isCreate
 {
     static char imageProgressKey;
     THProgressView *progressView = objc_getAssociatedObject(self, &imageProgressKey);
     if (isCreate)
     {
+        int pwidth = ceil(self.bounds.size.width * 0.76);
         if (progressView == nil)
         {
-            progressView = [[THProgressView alloc] initWithFrame:CGRectMake(0, 0, self.bounds.size.width * 0.76, 20)];
+            progressView = [[THProgressView alloc] initWithFrame:CGRectMake(0, 0,pwidth, 20)];
+            progressView.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleBottomMargin;
+            
             progressView.progressTintColor = [UIColor whiteColor];
             progressView.borderTintColor = [UIColor whiteColor];
             progressView.hidden = YES;
@@ -72,7 +46,7 @@ static char imageOriginalModelKey;
             objc_setAssociatedObject(self, &imageProgressKey, progressView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
         CGRect frame = progressView.frame;
-        frame.size.width = self.bounds.size.width * 0.76;
+        frame.size.width = pwidth;
         progressView.frame = frame;
         progressView.center = CGPointMake(self.bounds.size.width / 2, self.bounds.size.height / 2);
         
@@ -83,30 +57,30 @@ static char imageOriginalModelKey;
     }
     return progressView;
 }
-
-- (UIViewContentMode)originalViewContentMode
+-(UIViewContentMode)loadedViewContentMode
 {
-    NSNumber *value = objc_getAssociatedObject(self, &imageOriginalModelKey);
-    int mode = -1;
-    if (value)
-    {
-        mode = [value intValue];
-    }
-    if (mode < 0 || mode > UIViewContentModeBottomRight)
+    NSNumber *value = objc_getAssociatedObject(self, &imageLoadedModeKey);
+    if(value == nil)
     {
         return -1;
     }
-    else
-    {
-        return mode;
-    }
+    return [value intValue];
+}
+-(void)setLoadedViewContentMode:(UIViewContentMode)loadedViewContentMode
+{
+    objc_setAssociatedObject(self, &imageLoadedModeKey, @(loadedViewContentMode), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+-(int)reloadCount
+{
+    NSNumber *value = objc_getAssociatedObject(self, &imageReloadCountKey);
+    return [value intValue];
 }
 
-- (void)setOriginalViewContentMode:(UIViewContentMode)originalViewContentMode
+-(void)setReloadCount:(int)count
 {
-    NSNumber *value = [[NSNumber alloc] initWithInt:originalViewContentMode];
-    objc_setAssociatedObject(self, &imageOriginalModelKey, value, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(self, &imageReloadCountKey, @(count), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
+
 
 - (LKImageViewStatus)status
 {
@@ -138,18 +112,19 @@ static char imageOriginalModelKey;
     objc_setAssociatedObject(self, &imageURLKey, imageURL, OBJC_ASSOCIATION_COPY_NONATOMIC);
     if (imageURL)
     {
+        [self setReloadCount:0];
         [self reloadImageURL];
     }
     else
     {
-        [self sy_cancelCurrentImageLoad];
-        self.image = nil;
-        self.backgroundColor = [UIColor colorWithRed:233/255.0 green:228/255.0 blue:223/255.0 alpha:1];
-        self.status = LKImageViewStatusNone;
-
         THProgressView *pv = [self sy_progressView:NO];
         pv.hidden = YES;
         [pv removeFromSuperview];
+        
+        [self lk_cancelCurrentImageLoad];
+        self.image = nil;
+        self.backgroundColor = [UIColor colorWithRed:233/255.0 green:228/255.0 blue:223/255.0 alpha:1];
+        self.status = LKImageViewStatusNone;
     }
 }
 
@@ -171,133 +146,104 @@ static char imageOriginalModelKey;
     return objc_getAssociatedObject(self, &imageURLKey);
 }
 
-- (void)sy_cancelCurrentImageLoad
-{
-    if (self.imageURL)
-    {
-        void *callstack[2];
-        int frames = backtrace(callstack, 2);
-        char **strs = backtrace_symbols(callstack, 2);
-        NSString *func_name = nil;
-        if (frames > 1 && strs && strs[1])
-        {
-            func_name = [NSString stringWithUTF8String:strs[1]];
-        }
-        free(strs);
-
-        //如果从外部调用 cancelImageLoad  才进行扫尾工作
-        if ([func_name rangeOfString:@"UIImageView(WebCache)"].length == 0)
-        {
-            THProgressView *pv = [self sy_progressView:NO];
-            pv.hidden = YES;
-            [pv removeFromSuperview];
-
-            self.status = LKImageViewStatusNone;
-        }
-    }
-    [self sy_cancelCurrentImageLoad];
-}
-
 - (void)reloadImageURL
 {
     id imageURL = self.imageURL;
     if ([imageURL isKindOfClass:[NSString class]])
     {
-        if ([imageURL isEqualToString:@""] == NO)
-        {
-            imageURL = [NSURL URLWithString:imageURL];
-        }
+        imageURL = [NSURL URLWithString:imageURL];
     }
     if ([imageURL isKindOfClass:[NSURL class]] == NO)
     {
         return;
     }
 
-    [self sy_cancelCurrentImageLoad];
+    [self lk_cancelCurrentImageLoad];
 
     self.image = nil;
     self.backgroundColor = [UIColor colorWithRed:233/255.0 green:228/255.0 blue:223/255.0 alpha:1];
 
     __weak UIImageView *wself = self;
-    if([self originalViewContentMode] < 0){
-        [self setOriginalViewContentMode:self.contentMode];
+    
+    if(self.loadedViewContentMode < 0)
+    {
+        self.loadedViewContentMode = self.contentMode;
     }
-    self.contentMode = UIViewContentModeScaleAspectFill;
-
+    
     self.status = LKImageViewStatusLoading;
     
-    __weak __block THProgressView *pv = [self sy_progressView:YES];
-    pv.hidden = YES;
+    __block THProgressView *pv = [self sy_progressView:YES];
     pv.progress = 0;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        pv.hidden = NO;
-    });
+    pv.hidden = NO;
+    [pv setNeedsDisplay];
+    [self setNeedsDisplay];
     
-    [self setImageWithURL:imageURL placeholderImage:nil options:SDWebImageRetryFailed progress:^(NSInteger receivedSize, NSInteger expectedSize) {
+#ifdef dispatch_main_async_safe
+    [self sd_setImageWithURL:imageURL placeholderImage:nil options:SDWebImageRetryFailed
+#else
+     [self setImageWithURL:imageURL placeholderImage:nil options:SDWebImageRetryFailed
+#endif
+                  progress:^(NSInteger receivedSize, NSInteger expectedSize)
+    {
         float pvalue = MAX(0, MIN(1, receivedSize / (float) expectedSize));
         dispatch_main_sync_safe(^{
-            if(!pv){
-                pv = [wself sy_progressView:YES];
-            }
-            if(wself.image == nil){
+            if(wself.image == nil)
+            {
+                if(!pv)
+                {
+                    pv = [wself sy_progressView:YES];
+                }
                 pv.hidden = NO;
-            }
-            CGSize size = wself.bounds.size;
-            CGPoint center = CGPointMake(size.width / 2, size.height / 2);
-            if (pv.bounds.size.width != size.width)
-            {
-                CGRect frame = pv.frame;
-                frame.size.width = size.width * 0.76;
-                pv.frame = frame;
-            }
-            if (CGPointEqualToPoint(pv.center, center) == NO)
-            {
-                pv.center = center;
             }
             pv.progress = pvalue;
         });
-
-    } completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType) {
-        
-        if(!pv){
+    }
+#ifdef dispatch_main_async_safe
+              completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL* url)
+#else
+              completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType)
+#endif
+    {
+        if(!pv)
+        {
             pv = [wself sy_progressView:NO];
         }
         
         if (image)
         {
             pv.hidden = YES;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                pv.progress = 0;
-                [pv removeFromSuperview];
-            });
-            
-            if([wself originalViewContentMode]>=0){
-                
-                if(wself.contentMode != [wself originalViewContentMode]){
-                    wself.contentMode = [wself originalViewContentMode];
-                    [wself setNeedsDisplay];
-                }
-            }
-            else if (wself.contentMode != UIViewContentModeScaleAspectFill)
+            pv.progress = 0;
+            [pv removeFromSuperview];
+
+            if(wself.loadedViewContentMode > 0)
             {
-                wself.contentMode = UIViewContentModeScaleAspectFill;
+                wself.contentMode = wself.loadedViewContentMode;
                 [wself setNeedsDisplay];
             }
             
             wself.status = LKImageViewStatusLoaded;
             wself.backgroundColor = [UIColor clearColor];
-            [wself setOriginalViewContentMode:-1];
         }
         else
         {
             if (error)
             {
+                int reloadCount = [wself reloadCount];
+                if(reloadCount < 3)
+                {
+                    [wself setReloadCount:reloadCount+1];
+                    [wself reloadImageURL];
+                    return ;
+                }
+                
                 pv.hidden = YES;
                 wself.status = LKImageViewStatusFail;
-                [wself setOriginalViewContentMode:-1];
+                
                 dispatch_async(dispatch_get_main_queue(), ^{
+                    
                     pv.progress = 0;
                     [pv removeFromSuperview];
+                    
                     UIImage *remindNoImage = [UIImage imageNamed:@"remind_noimage.png"];
                     if (wself.bounds.size.width < remindNoImage.size.width || wself.bounds.size.height < remindNoImage.size.height)
                     {
@@ -311,6 +257,7 @@ static char imageOriginalModelKey;
                     [wself setNeedsDisplay];
                 });
             }
+            
         }
     }];
 }
@@ -340,14 +287,18 @@ static char imageOriginalModelKey;
     switch (self.status)
     {
         case LKImageViewStatusFail:
+        {
             [self reloadImageURL];
             break;
+        }
         default:
+        {
             if (self.onTouchTapBlock)
             {
                 self.onTouchTapBlock(self);
             }
             break;
+        }
     }
 }
 @end
