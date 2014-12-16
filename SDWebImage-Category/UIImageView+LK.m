@@ -27,7 +27,7 @@ static char imageReloadCountKey;
     [self cancelCurrentImageLoad];
 #endif
 }
-- (LK_THProgressView *)sy_progressView:(BOOL)isCreate
+- (LK_THProgressView *)lk_progressView:(BOOL)isCreate
 {
     static char imageProgressKey;
     LK_THProgressView *progressView = objc_getAssociatedObject(self, &imageProgressKey);
@@ -81,7 +81,6 @@ static char imageReloadCountKey;
     objc_setAssociatedObject(self, &imageReloadCountKey, @(count), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-
 - (LKImageViewStatus)status
 {
     NSNumber *value = objc_getAssociatedObject(self, &imageStatusKey);
@@ -97,18 +96,48 @@ static char imageReloadCountKey;
     objc_setAssociatedObject(self, &imageStatusKey, @(status), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-
-
+-(NSURL*)URLWithImageURL:(id)imageURL
+{
+    if ([imageURL isKindOfClass:[NSString class]])
+    {
+        if([imageURL hasPrefix:@"http"]||[imageURL hasPrefix:@"ftp"])
+        {
+            imageURL = [NSURL URLWithString:imageURL];
+        }
+        else
+        {
+            imageURL = [NSURL fileURLWithPath:imageURL];
+        }
+    }
+    if ([imageURL isKindOfClass:[NSURL class]] == NO)
+    {
+        imageURL = nil;
+    }
+    return imageURL;
+}
 - (void)setImageURLFromCache:(id)imageURL
 {
-    [self sy_loadTapEvent];
+    [self lk_loadTapEvent];
     self.status = LKImageViewStatusLoaded;
+    
+    imageURL = [self URLWithImageURL:imageURL];
     objc_setAssociatedObject(self, &imageURLKey, imageURL, OBJC_ASSOCIATION_COPY_NONATOMIC);
 }
 
 - (void)setImageURL:(id)imageURL
 {
-    [self sy_loadTapEvent];
+    [self lk_loadTapEvent];
+    
+    imageURL = [self URLWithImageURL:imageURL];
+    if (self.imageURL && self.image && self.status == LKImageViewStatusLoaded && imageURL)
+    {
+        if([[self.imageURL absoluteString] isEqualToString:[imageURL absoluteString]])
+        {
+            ///相同的图片URL 就不在设置了
+            return;
+        }
+    }
+    
     objc_setAssociatedObject(self, &imageURLKey, imageURL, OBJC_ASSOCIATION_COPY_NONATOMIC);
     if (imageURL)
     {
@@ -117,7 +146,7 @@ static char imageReloadCountKey;
     }
     else
     {
-        LK_THProgressView *pv = [self sy_progressView:NO];
+        LK_THProgressView *pv = [self lk_progressView:NO];
         pv.hidden = YES;
         [pv removeFromSuperview];
         
@@ -128,14 +157,14 @@ static char imageReloadCountKey;
     }
 }
 
-- (void)sy_loadTapEvent
+- (void)lk_loadTapEvent
 {
     static char tapEventLoadedKey;
     id loaded = objc_getAssociatedObject(self, &tapEventLoadedKey);
     if (loaded == nil)
     {
         self.userInteractionEnabled = YES;
-        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sy_handleTapEvent:)];
+        UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(lk_handleTapEvent:)];
         [self addGestureRecognizer:tap];
         objc_setAssociatedObject(self, &tapEventLoadedKey, @(YES), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
@@ -149,15 +178,7 @@ static char imageReloadCountKey;
 - (void)reloadImageURL
 {
     id imageURL = self.imageURL;
-    if ([imageURL isKindOfClass:[NSString class]])
-    {
-        imageURL = [NSURL URLWithString:imageURL];
-    }
-    if ([imageURL isKindOfClass:[NSURL class]] == NO)
-    {
-        return;
-    }
-
+    
     [self lk_cancelCurrentImageLoad];
 
     self.image = nil;
@@ -172,7 +193,7 @@ static char imageReloadCountKey;
     
     self.status = LKImageViewStatusLoading;
     
-    __block LK_THProgressView *pv = [self sy_progressView:YES];
+    __block LK_THProgressView *pv = [self lk_progressView:YES];
     pv.progress = 0;
     pv.hidden = NO;
     [pv setNeedsDisplay];
@@ -195,7 +216,7 @@ static char imageReloadCountKey;
             {
                 if(!pv)
                 {
-                    pv = [wself sy_progressView:YES];
+                    pv = [wself lk_progressView:YES];
                 }
                 pv.hidden = NO;
             }
@@ -210,7 +231,7 @@ static char imageReloadCountKey;
     {
         if(!pv)
         {
-            pv = [wself sy_progressView:NO];
+            pv = [wself lk_progressView:NO];
         }
         
         if (image)
@@ -268,7 +289,7 @@ static char imageReloadCountKey;
 
 - (void)setOnTouchTapBlock:(void (^)(UIImageView *))onTouchTapBlock
 {
-    [self sy_loadTapEvent];
+    [self lk_loadTapEvent];
     objc_setAssociatedObject(self, &imageTapEventKey, onTouchTapBlock, OBJC_ASSOCIATION_COPY_NONATOMIC);
 }
 
@@ -286,7 +307,7 @@ static char imageReloadCountKey;
     return [super pointInside:point withEvent:event];
 }
 
-- (void)sy_handleTapEvent:(UITapGestureRecognizer *)sender
+- (void)lk_handleTapEvent:(UITapGestureRecognizer *)sender
 {
     switch (self.status)
     {
