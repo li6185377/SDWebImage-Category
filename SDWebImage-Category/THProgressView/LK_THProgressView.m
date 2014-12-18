@@ -96,6 +96,12 @@ static const CGFloat kBorderWidth = 2.0f;
     }
     return self;
 }
+-(void)setFrame:(CGRect)frame
+{
+    [super setFrame:frame];
+    _progressLayer.frame = self.bounds;
+    [_progressLayer setNeedsDisplay];
+}
 
 - (void)initialize
 {
@@ -150,7 +156,7 @@ static const CGFloat kBorderWidth = 2.0f;
 - (void)setProgressTintColor:(UIColor *)progressTintColor
 {
     self.progressLayer.progressTintColor = progressTintColor;
-   [self.progressLayer setNeedsDisplay];
+    [self.progressLayer setNeedsDisplay];
 }
 
 - (UIColor *)borderTintColor
