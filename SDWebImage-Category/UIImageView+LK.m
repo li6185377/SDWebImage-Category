@@ -192,8 +192,11 @@ static char imageReloadCountKey;
     pv.hidden = NO;
     [pv setNeedsDisplay];
     [self setNeedsDisplay];
-    
+#ifdef dispatch_main_async_safe
     [self sd_setImageWithURL:imageURL placeholderImage:nil options:SDWebImageRetryFailed
+#else
+     [self setImageWithURL:imageURL placeholderImage:nil options:SDWebImageRetryFailed
+#endif
                     progress:^(NSInteger receivedSize, NSInteger expectedSize)
      {
          if(expectedSize <= 0)
@@ -213,20 +216,26 @@ static char imageReloadCountKey;
              pv.progress = pvalue;
          });
      }
-                   completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL* url)
+#ifdef dispatch_main_async_safe
+                 completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType, NSURL* url)
+#else
+                 completed:^(UIImage *image, NSError *error, SDImageCacheType cacheType)
+#endif
      {
          if (image)
          {
              [wself lk_hideProgressView];
              
-             if(wself.loadedViewContentMode > 0 && wself.contentMode != wself.loadedViewContentMode)
+             if(image.duration == 0)
              {
-                 wself.contentMode = wself.loadedViewContentMode;
-                 [wself setNeedsDisplay];
+                 if(wself.loadedViewContentMode > 0 && wself.contentMode != wself.loadedViewContentMode)
+                 {
+                     wself.contentMode = wself.loadedViewContentMode;
+                     [wself setNeedsDisplay];
+                 }
+                 wself.status = LKImageViewStatusLoaded;
+                 wself.backgroundColor = [UIColor clearColor];
              }
-             
-             wself.status = LKImageViewStatusLoaded;
-             wself.backgroundColor = [UIColor clearColor];
          }
          else
          {
