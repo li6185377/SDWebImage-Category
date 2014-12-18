@@ -225,7 +225,7 @@ static char imageReloadCountKey;
          if (image)
          {
              [wself lk_hideProgressView];
-             
+             wself.status = LKImageViewStatusLoaded;
              if(image.duration == 0)
              {
                  if(wself.loadedViewContentMode > 0 && wself.contentMode != wself.loadedViewContentMode)
@@ -233,7 +233,6 @@ static char imageReloadCountKey;
                      wself.contentMode = wself.loadedViewContentMode;
                      [wself setNeedsDisplay];
                  }
-                 wself.status = LKImageViewStatusLoaded;
                  wself.backgroundColor = [UIColor clearColor];
              }
          }
