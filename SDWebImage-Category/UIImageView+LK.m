@@ -343,12 +343,13 @@ static __weak id lk_imageDownloadDelegate;
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event
 {
-    if (self.status == LKImageViewStatusClickDownload)
+    LKImageViewStatus status = self.status;
+    if (status == LKImageViewStatusClickDownload || status == LKImageViewStatusFail)
     {
         return CGRectContainsPoint(self.bounds, point);
     }
     
-    if (self.imageURL && self.status != LKImageViewStatusFail && self.onTouchTapBlock == nil)
+    if (self.imageURL && self.onTouchTapBlock == nil)
     {
         return NO;
     }
