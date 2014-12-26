@@ -19,9 +19,16 @@
 @synthesize imageView = _imageView;
 
 #pragma mark - Managing the detail item
-
+///显示点击后下载
+-(BOOL)lk_clickDownloadImageForURL:(NSURL *)imageURL
+{
+    return YES;
+}
 - (void)setImageURL:(NSURL *)imageURL
 {
+    ///设置回调
+    [UIImageView lk_setImageDownloadDelegate:self];
+    
     if (_imageURL != imageURL)
     {
         _imageURL = imageURL;
