@@ -197,17 +197,22 @@ static __weak id lk_imageDownloadDelegate;
     }
 }
 
+static char tapEventLoadedKey;
 - (void)lk_loadTapEvent
 {
-    static char tapEventLoadedKey;
-    id loaded = objc_getAssociatedObject(self, &tapEventLoadedKey);
-    if (loaded == nil)
+    UITapGestureRecognizer* tap = objc_getAssociatedObject(self, &tapEventLoadedKey);
+    if (tap == nil)
     {
         self.userInteractionEnabled = YES;
         UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(lk_handleTapEvent:)];
         [self addGestureRecognizer:tap];
-        objc_setAssociatedObject(self, &tapEventLoadedKey, @(YES), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(self, &tapEventLoadedKey,tap, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
+}
+-(BOOL)lk_hasLoadedTapEvent
+{
+    id tapObj = objc_getAssociatedObject(self, &tapEventLoadedKey);
+    return (tapObj != nil);
 }
 
 - (id)imageURL
@@ -343,17 +348,21 @@ static __weak id lk_imageDownloadDelegate;
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event
 {
+    if(self.imageURL == nil && [self lk_hasLoadedTapEvent])
+    {
+        return NO;
+    }
     LKImageViewStatus status = self.status;
     if (status == LKImageViewStatusClickDownload || status == LKImageViewStatusFail)
     {
-        return CGRectContainsPoint(self.bounds, point);
+        return [super pointInside:point withEvent:event];
     }
     
     if (self.imageURL && self.onTouchTapBlock == nil)
     {
         return NO;
     }
-    return CGRectContainsPoint(self.bounds, point);
+    return [super pointInside:point withEvent:event];
 }
 
 - (void)lk_handleTapEvent:(UITapGestureRecognizer *)sender
