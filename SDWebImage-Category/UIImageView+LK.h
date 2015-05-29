@@ -48,8 +48,15 @@ typedef NS_ENUM(NSInteger, LKImageViewStatus){
 ///设置回调代理 是否显示点击下载图片
 +(void)lk_setImageDownloadDelegate:(id)delegate;
 
-///加载的图片 url地址 可以是 NSString 或 NSURL
+/**
+ *  @brief  加载的图片 url地址 可以是 NSString 或 NSURL,
+            SDWebImage 更新后  跟SDWebImage的一个方法 重名了  请用 lk_imageURL
+ */
 @property(copy, nonatomic) id imageURL;
+/**
+ *  @brief  加载的图片 url地址 可以是 NSString 或 NSURL
+ */
+@property(copy, nonatomic,setter=lk_setImageURL:) id lk_imageURL;
 
 ///加载完成后 给图片设置的contentMode
 @property UIViewContentMode loadedViewContentMode;

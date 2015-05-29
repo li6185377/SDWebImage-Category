@@ -143,14 +143,19 @@ static __weak id lk_imageDownloadDelegate;
     objc_setAssociatedObject(self, &imageURLKey, imageURL, OBJC_ASSOCIATION_COPY_NONATOMIC);
 }
 
+
 - (void)setImageURL:(id)imageURL
+{
+    [self lk_setImageURL:imageURL];
+}
+-(void)lk_setImageURL:(id)imageURL
 {
     [self lk_loadTapEvent];
     
     imageURL = [self lk_URLWithImageURL:imageURL];
-    if (self.imageURL && self.image && self.image.duration == 0 && self.status == LKImageViewStatusLoaded && imageURL)
+    if (self.lk_imageURL && self.image && self.image.duration == 0 && self.status == LKImageViewStatusLoaded && imageURL)
     {
-        if([[self.imageURL absoluteString] isEqualToString:[imageURL absoluteString]])
+        if([[self.lk_imageURL absoluteString] isEqualToString:[imageURL absoluteString]])
         {
             ///相同的图片URL 就不在设置了
             return;
@@ -215,7 +220,11 @@ static char tapEventLoadedKey;
     return (tapObj != nil);
 }
 
-- (id)imageURL
+-(id)imageURL
+{
+    return [self lk_imageURL];
+}
+- (id)lk_imageURL
 {
     return objc_getAssociatedObject(self, &imageURLKey);
 }
@@ -236,7 +245,7 @@ static char tapEventLoadedKey;
 }
 - (void)reloadImageURL
 {
-    id imageURL = self.imageURL;
+    id imageURL = self.lk_imageURL;
     
     [self lk_init_imageview];
     
@@ -348,7 +357,7 @@ static char tapEventLoadedKey;
 
 - (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event
 {
-    if(self.imageURL == nil && [self lk_hasLoadedTapEvent])
+    if(self.lk_imageURL == nil && [self lk_hasLoadedTapEvent])
     {
         return NO;
     }
@@ -358,7 +367,7 @@ static char tapEventLoadedKey;
         return [super pointInside:point withEvent:event];
     }
     
-    if (self.imageURL && self.onTouchTapBlock == nil)
+    if (self.lk_imageURL && self.onTouchTapBlock == nil)
     {
         return NO;
     }
@@ -372,7 +381,7 @@ static char tapEventLoadedKey;
     {
         if([lk_imageDownloadDelegate respondsToSelector:@selector(lk_newURLWithClickURL:)])
         {
-            NSURL* oriURL = self.imageURL;
+            NSURL* oriURL = self.lk_imageURL;
             NSURL* newURL = [lk_imageDownloadDelegate lk_newURLWithClickURL:oriURL];
             if ([oriURL isEqual:newURL] == NO)
             {
